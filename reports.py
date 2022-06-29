@@ -23,10 +23,7 @@ class Report:
 
 
 report = Report()
-currencies = report.fetchCurrentData()
-with open("old_data.json", "w") as outfile:
-    json.dump(currencies, outfile, indent=4)
-data = json.load(open("old_data.json"))
+data = report.fetchCurrentData()
 
 
 def max_volume(data):
@@ -35,42 +32,42 @@ def max_volume(data):
 
 
 def best_and_worst_currencies(data):
-    volumes = {v['quote']['USD']['percent_change_24h']: v['name'] for v in data}
+    currencies = {v['quote']['USD']['percent_change_24h']: v['name'] for v in data}
 
-    sorted_volumes = sorted(volumes)
-    best_volumes = sorted_volumes[:10]
-    worst_volumes = sorted_volumes[-10:]
+    sorted_currencies = sorted(currencies)
+    best_currencies = sorted_currencies[:10]
+    worst_currencies = sorted_currencies[-10:]
     best = []
     worst = []
-    for v, name in volumes.items():
-        if v in best_volumes:
+    for v, name in currencies.items():
+        if v in best_currencies:
             best.append(name)
-        if v in worst_volumes:
+        if v in worst_currencies:
             worst.append(name)
     return best, worst
 
 
 def first_20_curriences(data):
-    volumes = {v['name']: v['quote']['USD']['price'] for v in data[:20]}
-    return volumes
+    curriences = {c['name']: c['quote']['USD']['price'] for c in data[:20]}
+    return curriences
 
 
 def money_to_buy_max_24h_volume_currency(data, volume):
-    volumes = {v['name']: v['quote']['USD']['price'] for v in data
+    prices = {v['name']: v['quote']['USD']['price'] for v in data
                if v['quote']['USD']['volume_24h'] > volume}
-    return volumes
+    return prices
 
 
-new_data = report.fetchCurrentData()
-old_data = json.load(open("old_data.json"))
+def first_20_curriences_percentage_change_24h(data):
+    percentage_change_24h = {p['name']: p['quote']['USD']['percent_change_24h'] for p in data[:20]}
+    return percentage_change_24h
 
 
 # find the percentage of gain or loss I have if I bought one unit of each
 # of the top 20 cryptocurrencies the day before
-def find_percentage(new_data, old_data):
-    new_20 = first_20_curriences(new_data)
-    old_20 = first_20_curriences(old_data)
-    margin = 100 - ((sum(new_20.values()) * 100) / sum(old_20.values()))
+def find_percentage(data):
+    new_20 = first_20_curriences_percentage_change_24h(data)
+    margin = (sum(new_20.values()))
     return margin
 
 
@@ -79,13 +76,13 @@ today = date.today()
 max_volume_crypto = max_volume(data)
 bests, worsts = best_and_worst_currencies(data)
 f_20 = first_20_curriences(data)
-crypto = money_to_buy_max_24h_volume_currency(data, 76000000)
-percentage = find_percentage(new_data, old_data)
+price_max24h_volume_currency = money_to_buy_max_24h_volume_currency(data, 76000000)
+percentage = find_percentage(data)
 result = {'max_volume_crypto': max_volume_crypto,
           'bests': bests,
           'worst': worsts,
           'first_20_crypto': f_20,
-          'crypto': crypto,
+          'crypto': price_max24h_volume_currency,
           'margin': percentage}
 with open(f"{today}.json", "w") as outfile:
     json.dump(result, outfile, indent=4)
